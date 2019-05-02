@@ -2,54 +2,48 @@ use std::marker::PhantomData;
 
 use mpi::traits::*;
 
-pub unsafe trait ProtocolPart {
-    type Dual;
-    type Comm: mpi::traits::Communicator;
-
-    unsafe fn from_comm(c: Self::Comm) -> Self;
+pub mod prelude {
+    pub use super::AllGather;
+    pub use super::Eps;
+    pub use super::Protocol;
+    pub use super::ProtocolPart;
 }
 
-pub struct Eps<C>(C);
-
-impl<C> Eps<C> {
-    pub fn done(self) -> C {
-        self.0
-    }
+pub struct Protocol<P, C> {
+    comm: C,
+    _phantom: PhantomData<P>,
 }
 
-unsafe impl<C: mpi::traits::Communicator> ProtocolPart for Eps<C> {
-    type Dual = Eps<C>;
-    type Comm = C;
-
-    unsafe fn from_comm(c: Self::Comm) -> Self {
-        Self(c)
-    }
-}
-
-pub struct AllGather<T, P: ProtocolPart>(P::Comm, PhantomData<(T, P)>);
-
-impl<T: Equivalence, P: ProtocolPart> AllGather<T, P> {
-    pub fn all_gather(self, input: &T, output: &mut [T]) -> P {
-        unsafe {
-            self.0.all_gather_into(input, output);
-            ProtocolPart::from_comm(self.0)
+impl<P, C> Protocol<P, C> {
+    pub unsafe fn from_comm(comm: C) -> Self {
+        Self {
+            comm,
+            _phantom: PhantomData,
         }
     }
 }
 
-unsafe impl<T, P: ProtocolPart> ProtocolPart for AllGather<T, P> {
-    type Dual = AllGather<T, P>;
-    type Comm = P::Comm;
+pub unsafe trait ProtocolPart {}
 
-    unsafe fn from_comm(c: Self::Comm) -> Self {
-        Self(c, PhantomData)
+pub struct Eps;
+
+unsafe impl ProtocolPart for Eps {}
+
+impl<C> Protocol<Eps, C> {
+    pub fn done(self) -> C {
+        self.comm
     }
 }
 
-pub struct Communicator<C: mpi::traits::Communicator, P: ProtocolPart>(C, P);
+pub struct AllGather<T: Equivalence, P: ProtocolPart>(PhantomData<(T, P)>);
 
-impl<C: mpi::traits::Communicator, P: ProtocolPart> Communicator<C, P> {
-    pub unsafe fn from_comm_protocol(comm: C, protocol: P) -> Self {
-        Communicator(comm, protocol)
+impl<T: Equivalence, P: ProtocolPart, C: Communicator> Protocol<AllGather<T, P>, C> {
+    pub fn all_gather(self, input: &T, output: &mut [T]) -> Protocol<P, C> {
+        unsafe {
+            self.comm.all_gather_into(input, output);
+            Protocol::from_comm(self.comm)
+        }
     }
 }
+
+unsafe impl<T: Equivalence, P: ProtocolPart> ProtocolPart for AllGather<T, P> {}

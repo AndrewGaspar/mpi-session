@@ -1,6 +1,6 @@
-use mpi::{self, topology::SystemCommunicator, traits::*};
+use mpi::{self, traits::*};
 
-use rsmpi_session::*;
+use mpi_session::prelude::*;
 
 fn main() -> Result<(), Box<std::error::Error>> {
     let universe = mpi::initialize().unwrap();
@@ -14,11 +14,11 @@ fn main() -> Result<(), Box<std::error::Error>> {
     /// communication pattern over an MPI communicator.
     ///
     /// This particular protocol performs an "MPI_Allgather" and is then done.
-    type Protocol = AllGather<i32, Eps<SystemCommunicator>>;
+    type MyProtocol = AllGather<i32, Eps>;
 
     // Constructing a protocol is still unsafe since the starting state of the communicator cannot
     // be statically verified.
-    let protocol = unsafe { Protocol::from_comm(comm) };
+    let protocol = unsafe { Protocol::<MyProtocol, _>::from_comm(comm) };
 
     let mut ints = vec![0; size as usize];
 
