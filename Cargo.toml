@@ -5,6 +5,9 @@ authors = ["Andrew Gaspar <andrew.gaspar@outlook.com>"]
 edition = "2018"
 license = "MIT"
 
+[dependencies]
+quick-error = "1.2.2"
+
 [dependencies.mpi]
 git = "https://github.com/bsteinb/rsmpi"
 default-features = false
