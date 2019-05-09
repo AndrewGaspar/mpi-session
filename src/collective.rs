@@ -45,6 +45,11 @@ pub struct Gatherer<Source: RankSelect, T: Equivalence, P: ProtocolPart>(
     PhantomData<(Source, T, P)>,
 );
 
+unsafe impl<Source: RankSelect, T: Equivalence, P: ProtocolPart> ProtocolPart
+    for Gatherer<Source, T, P>
+{
+}
+
 impl<Source: RankSelect, T: Equivalence, P: ProtocolPart, C: Communicator>
     Session<Gatherer<Source, T, P>, C>
 {
@@ -61,6 +66,11 @@ impl<Source: RankSelect, T: Equivalence, P: ProtocolPart, C: Communicator>
 pub struct Gatheree<Source: RankSelect, T: Equivalence, P: ProtocolPart>(
     PhantomData<(Source, T, P)>,
 );
+
+unsafe impl<Source: RankSelect, T: Equivalence, P: ProtocolPart> ProtocolPart
+    for Gatheree<Source, T, P>
+{
+}
 
 impl<Source: RankSelect, T: Equivalence, P: ProtocolPart, C: Communicator>
     Session<Gatheree<Source, T, P>, C>
@@ -105,6 +115,11 @@ pub struct Publisher<Source: RankSelect, K: super::key::Key, P: ProtocolPart>(
     PhantomData<(Source, K, P)>,
 );
 
+unsafe impl<Source: RankSelect, K: super::key::Key, P: ProtocolPart> ProtocolPart
+    for Publisher<Source, K, P>
+{
+}
+
 impl<Source: RankSelect, K: super::key::Key + 'static, P: ProtocolPart, C: Communicator>
     Session<Publisher<Source, K, P>, C>
 where
@@ -124,6 +139,11 @@ where
 pub struct Publishee<Source: RankSelect, K: super::key::Key, P: ProtocolPart>(
     PhantomData<(Source, K, P)>,
 );
+
+unsafe impl<Source: RankSelect, K: super::key::Key, P: ProtocolPart> ProtocolPart
+    for Publishee<Source, K, P>
+{
+}
 
 impl<Source: RankSelect, K: super::key::Key + 'static, P: ProtocolPart, C: Communicator>
     Session<Publishee<Source, K, P>, C>

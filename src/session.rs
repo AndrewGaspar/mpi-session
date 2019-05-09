@@ -2,13 +2,17 @@ use std::any::{Any, TypeId};
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
 
-pub struct Session<P, C> {
+use mpi::topology::Communicator;
+
+use crate::prelude::*;
+
+pub struct Session<P: ProtocolPart, C: Communicator> {
     pub(crate) comm: C,
     state: SessionState,
     _phantom: PhantomData<P>,
 }
 
-impl<P, C> Session<P, C> {
+impl<P: ProtocolPart, C: Communicator> Session<P, C> {
     pub unsafe fn from_comm(comm: C) -> Self {
         Self {
             comm,
@@ -17,7 +21,7 @@ impl<P, C> Session<P, C> {
         }
     }
 
-    pub unsafe fn advance<N>(self) -> Session<N, C> {
+    pub unsafe fn advance<N: ProtocolPart>(self) -> Session<N, C> {
         Session::<N, C> {
             comm: self.comm,
             state: self.state,
