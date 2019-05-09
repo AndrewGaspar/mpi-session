@@ -1,6 +1,5 @@
 use std::any::{Any, TypeId};
 use std::collections::BTreeMap;
-use std::marker::PhantomData;
 
 use mpi::topology::Communicator;
 
@@ -9,24 +8,34 @@ use crate::prelude::*;
 pub struct Session<P: ProtocolPart, C: Communicator> {
     pub(crate) comm: C,
     state: SessionState,
-    _phantom: PhantomData<P>,
+    protocol: P,
 }
 
-impl<P: ProtocolPart, C: Communicator> Session<P, C> {
+impl<P: ProtocolPart<State = ()>, C: Communicator> Session<P, C> {
     pub unsafe fn from_comm(comm: C) -> Self {
         Self {
             comm,
             state: SessionState::new(),
-            _phantom: PhantomData,
+            protocol: P::build_part(()),
         }
     }
+}
 
-    pub unsafe fn advance<N: ProtocolPart>(self) -> Session<N, C> {
+impl<P: ProtocolPart, C: Communicator> Session<P, C> {
+    pub unsafe fn advance<N: ProtocolPart>(self, state: N::State) -> Session<N, C> {
         Session::<N, C> {
             comm: self.comm,
             state: self.state,
-            _phantom: PhantomData,
+            protocol: N::build_part(state),
         }
+    }
+
+    pub fn protocol(&self) -> &P {
+        &self.protocol
+    }
+
+    pub fn protocol_mut(&mut self) -> &mut P {
+        &mut self.protocol
     }
 
     pub fn state(&self) -> &SessionState {
