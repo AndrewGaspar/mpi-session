@@ -5,29 +5,33 @@ use mpi::topology::Communicator;
 
 use crate::prelude::*;
 
-pub struct Session<P: ProtocolPart, C: Communicator> {
+pub struct Session<P, C: Communicator> {
     pub(crate) comm: C,
     state: SessionState,
     protocol: P,
 }
 
-impl<P: ProtocolPart<State = ()>, C: Communicator> Session<P, C> {
+impl<P: ProtocolPart, C: Communicator> Session<P, C> {
     pub unsafe fn from_comm(comm: C) -> Self {
         Self {
             comm,
             state: SessionState::new(),
-            protocol: P::build_part(()),
+            protocol: P::build_part(),
         }
     }
 }
 
-impl<P: ProtocolPart, C: Communicator> Session<P, C> {
-    pub unsafe fn advance<N: ProtocolPart>(self, state: N::State) -> Session<N, C> {
+impl<P, C: Communicator> Session<P, C> {
+    pub unsafe fn advance<N>(self, next: N) -> Session<N, C> {
         Session::<N, C> {
             comm: self.comm,
             state: self.state,
-            protocol: N::build_part(state),
+            protocol: next,
         }
+    }
+
+    pub unsafe fn advance_next<N: ProtocolPart>(self) -> Session<N, C> {
+        self.advance(N::build_part())
     }
 
     pub fn protocol(&self) -> &P {

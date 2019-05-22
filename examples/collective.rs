@@ -29,20 +29,18 @@ fn main() -> Result<(), Box<std::error::Error>> {
     let session = session.all_gather(&rank, &mut ints[..]);
 
     let session = match session.split() {
-        PublishSplit::Publisher(p) => p.publish(1),
-        PublishSplit::Publishee(p) => p.receive(),
+        Split::Left(p) => p.publish(1),
+        Split::Right(p) => p.receive(),
     };
 
     let session = match session.split() {
-        GatherSplit::Gatherer(g) => {
+        Split::Left(g) => {
             let mut ranks = vec![0; comm.size() as usize];
             let session = g.gather(&comm.rank(), &mut ranks[..]);
             println!("{}: {:?}", comm.rank(), ranks);
             session
         }
-        GatherSplit::Gatheree(g) => {
-            g.gather(&comm.rank())
-        }
+        Split::Right(g) => g.gather(&comm.rank()),
     };
 
     let comm = session.done();
